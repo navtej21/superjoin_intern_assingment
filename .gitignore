@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data/uploads/*.pdf
+data/fact_layer.db
+.pytest_cache/
