@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv() 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -27,5 +29,3 @@ CHUNK_OVERLAP_CHARS = 500
 
 # LLM provider selection for later phases. Not used yet.
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "anthropic")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

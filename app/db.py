@@ -56,13 +56,63 @@ CREATE TABLE IF NOT EXISTS chunks (
     char_offset   INTEGER NOT NULL,      -- offset into page_start's own text
     text          TEXT NOT NULL,
     token_count   INTEGER NOT NULL,      -- estimate; sizing only, see textnorm
-    content_hash  TEXT NOT NULL,         -- sha256 of chunk text; LLM cache key later
+    content_hash  TEXT NOT NULL,         -- sha256 of chunk text; LLM cache key
     UNIQUE(doc_id, chunk_index)
+);
+
+CREATE TABLE IF NOT EXISTS facts (
+    id              TEXT PRIMARY KEY,
+    doc_id          TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    chunk_id        TEXT NOT NULL REFERENCES chunks(id) ON DELETE CASCADE,
+    entity          TEXT NOT NULL,
+    metric          TEXT NOT NULL,
+    fact_type       TEXT NOT NULL,       -- "numeric" | "semantic"
+    value           TEXT,
+    unit            TEXT,
+    period_label    TEXT,
+    period_start    TEXT,                -- filled in by Phase C normalisation
+    period_end      TEXT,
+    basis           TEXT,                -- open vocabulary, model-proposed
+    status          TEXT,                -- open vocabulary, model-proposed
+    quote           TEXT NOT NULL,
+    confidence      REAL NOT NULL,
+    page_number     INTEGER NOT NULL,    -- set only after grounding succeeds
+    printed_page    TEXT,
+    dimensions_json TEXT NOT NULL DEFAULT '{}',
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Every rejected candidate, at whichever stage it failed. Kept, not
+-- discarded: this table is the raw material for the assignment's required
+-- extraction-failure case, and a system that hides its own failures reads as
+-- less trustworthy than one that logs them.
+CREATE TABLE IF NOT EXISTS extraction_rejections (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_id      TEXT NOT NULL,
+    chunk_id    TEXT NOT NULL,
+    stage       TEXT NOT NULL,           -- "parse" | "shape" | "grounding"
+    reason      TEXT NOT NULL,
+    raw_json    TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- One row per (chunk content, prompt version). Re-running extraction, or
+-- ingesting a document that shares boilerplate with one already processed,
+-- must never re-pay for an unchanged call.
+CREATE TABLE IF NOT EXISTS llm_cache (
+    content_hash    TEXT NOT NULL,
+    prompt_version  TEXT NOT NULL,
+    response_text   TEXT NOT NULL,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (content_hash, prompt_version)
 );
 
 CREATE INDEX IF NOT EXISTS idx_pages_doc ON pages(doc_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(doc_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_hash ON chunks(content_hash);
+CREATE INDEX IF NOT EXISTS idx_facts_doc ON facts(doc_id);
+CREATE INDEX IF NOT EXISTS idx_facts_chunk ON facts(chunk_id);
+CREATE INDEX IF NOT EXISTS idx_rejections_chunk ON extraction_rejections(chunk_id);
 """
 
 

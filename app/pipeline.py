@@ -1,8 +1,10 @@
-"""Command-line entry point for the ingestion pipeline.
+"""Command-line entry point for the ingestion and extraction pipeline.
 
 Usage:
     python -m app.pipeline ingest <path>...   # files or directories
     python -m app.pipeline stats              # what is in the database
+    python -m app.pipeline extract            # run fact extraction over stored chunks
+    python -m app.pipeline relationships      # find corroboration/contradiction/reconciliation
     python -m app.pipeline pages <doc_id>     # page map, incl. printed numbers
 
 Kept as a module rather than folded into the API so the pipeline can be run and
@@ -123,6 +125,80 @@ def cmd_stats(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_extract(args: argparse.Namespace) -> int:
+    from app.extract import run_extraction
+    from app.llm import call_claude
+
+    init_db()
+    with db_session() as conn:
+        sql = "SELECT * FROM chunks"
+        params: tuple = ()
+        if args.doc_id:
+            sql += " WHERE doc_id = ?"
+            params = (args.doc_id,)
+        sql += " ORDER BY doc_id, chunk_index"
+        if args.limit:
+            sql += " LIMIT ?"
+            params = params + (args.limit,)
+
+        chunks = conn.execute(sql, params).fetchall()
+        if not chunks:
+            print("No chunks match. Run `ingest` first, or check --doc-id.", file=sys.stderr)
+            return 1
+
+        def progress(done: int, total: int) -> None:
+            print(f"  [{done}/{total}] extracted", end="\r", file=sys.stderr)
+
+        result = run_extraction(conn, chunks, call_claude, on_progress=progress)
+
+    print(file=sys.stderr)
+    print(
+        f"chunks processed: {result['chunks']}   "
+        f"api calls: {result['calls_made']}   "
+        f"facts: {result['facts']}   "
+        f"rejections: {result['rejections']}"
+    )
+    return 0
+
+
+def cmd_relationships(_: argparse.Namespace) -> int:
+    from app.adjudicate import find_relationships
+
+    init_db()
+    with db_session() as conn:
+        facts = conn.execute("SELECT * FROM facts").fetchall()
+        if not facts:
+            print("No facts stored yet. Run `extract` first.", file=sys.stderr)
+            return 1
+        relationships = find_relationships(facts)
+
+    by_type: dict[str, list] = {}
+    for rel in relationships:
+        by_type.setdefault(rel.relation_type, []).append(rel)
+
+    print(f"{len(facts)} facts analysed, {len(relationships)} relationships found:")
+    for rtype in ("corroboration", "contradiction", "context_reconcilable"):
+        print(f"  {rtype}: {len(by_type.get(rtype, []))}")
+    print()
+
+    for rtype in ("corroboration", "contradiction", "context_reconcilable"):
+        rels = by_type.get(rtype, [])
+        if not rels:
+            continue
+        print(f"=== {rtype.upper()} ({len(rels)}) ===")
+        for rel in rels:
+            print(f"  {rel.explanation}")
+            for ev in rel.evidence:
+                print(
+                    f"    - {ev['entity']} | {ev['metric']} = {ev['value']}  "
+                    f"(doc {ev['doc_id']}, pdf p{ev['page_number']}, printed {ev['printed_page']})"
+                )
+                print(f"      quote: {ev['quote']!r}")
+        print()
+
+    return 0
+
+
 def cmd_pages(args: argparse.Namespace) -> int:
     with db_session() as conn:
         rows = conn.execute(
@@ -152,6 +228,15 @@ def main(argv: list[str] | None = None) -> int:
     p_ingest.set_defaults(func=cmd_ingest)
 
     sub.add_parser("stats", help="summarise the database").set_defaults(func=cmd_stats)
+
+    p_extract = sub.add_parser("extract", help="run fact extraction over stored chunks")
+    p_extract.add_argument("--doc-id", help="restrict to one document")
+    p_extract.add_argument("--limit", type=int, help="process at most N chunks")
+    p_extract.set_defaults(func=cmd_extract)
+
+    sub.add_parser(
+        "relationships", help="find corroboration/contradiction/reconciliation across facts"
+    ).set_defaults(func=cmd_relationships)
 
     p_pages = sub.add_parser("pages", help="page map for one document")
     p_pages.add_argument("doc_id")

@@ -4,3 +4,4 @@ pymupdf
 python-multipart
 pydantic
 tiktoken
+python-dotenv==1.2.2
