@@ -5,4 +5,11 @@ venv/
 .env
 data/uploads/*.pdf
 data/fact_layer.db
+data/fact_layer.db-journal
+data/cache/*
+data/corpus/**/*.pdf
+!data/uploads/.gitkeep
+!data/cache/.gitkeep
+!data/corpus/**/.gitkeep
 .pytest_cache/
+*.egg-info/
