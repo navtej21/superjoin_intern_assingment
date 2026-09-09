@@ -13,7 +13,9 @@ Article IV report.
 
 ## Demo Of The Product
 
+[Short-Brief About The Project](https://drive.google.com/file/d/1mbbGxasFxrkTAbgmVQBc4nnXt6laoGn3/view?usp=drive_link)
 [Watch the video](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link)
+
 
 ## 1. Approach & Architecture
 
