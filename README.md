@@ -1,7 +1,7 @@
 # Fact Knowledge Layer
 
 # Demo Of The Product
-[![Watch the video]([https://youtube.com](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link))] Product-Demo
+[![Watch the video](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link)] Watch the video
 
 A system that reads a corpus of PDFs, extracts individually-grounded
 facts (a number or a status, tied to the exact quote and page it came
