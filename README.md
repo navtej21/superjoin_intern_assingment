@@ -1,8 +1,5 @@
 # Fact Knowledge Layer
 
-# Demo Of The Product
-[![Watch the video](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link)] Watch the video
-
 A system that reads a corpus of PDFs, extracts individually-grounded
 facts (a number or a status, tied to the exact quote and page it came
 from), and finds where those facts corroborate, contradict, or can be
@@ -14,6 +11,9 @@ annual report, its Q4 FY24 earnings deck, India's Economic Survey
 2024-25, the RBI's Annual Report 2024-25, and the IMF's 2025 India
 Article IV report.
 
+## Demo Of The Product
+
+[Watch the video](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link)
 
 ## 1. Approach & Architecture
 
@@ -37,7 +37,7 @@ no fixed schema of allowed metric names, entities, or bases, because a
 hard-coded lookup table would silently fail on the next document that
 uses different wording. Every candidate fact is then *grounded*:
 its `quote` must appear verbatim (whitespace-normalised) on a page the
-source chunk actually covers, or it's rejected, not silently dropped
+source chunk actually covered, or it's rejected, not silently dropped
 into the facts table. Rejected candidates are kept in
 `extraction_rejections`, not discarded — a system that shows what it
 couldn't verify is more trustworthy than one that only ever shows
@@ -79,10 +79,12 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-If `data/fact_layer.db` is already present in your clone, the corpus is
-already extracted and adjudicated — skip straight to "serve the API"
-below. Otherwise, create a `.env` file in the project root with your
-Anthropic key and run the pipeline yourself:
+`data/fact_layer.db` ships in this repo with all six documents already
+ingested (Phase A: pages and chunks, `python -m app.pipeline stats` to
+confirm), so cloning gets you the corpus without touching a PDF
+parser. Facts and relationships (Phases B/C) are not pre-populated —
+they cost real API calls, so they're left for you to run with your own
+key rather than baked in. Create a `.env` file in the project root:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-api03-***
