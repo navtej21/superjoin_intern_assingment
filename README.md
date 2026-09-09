@@ -13,7 +13,7 @@ Article IV report.
 
 ## Demo Of The Product
 
-[Short-Brief Video About The Project](https://drive.google.com/file/d/1mbbGxasFxrkTAbgmVQBc4nnXt6laoGn3/view?usp=sharing)\n
+[Short Video About The Project](https://drive.google.com/file/d/1mbbGxasFxrkTAbgmVQBc4nnXt6laoGn3/view?usp=sharing)
 [Watch the Detailed Video](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link)
 
 
