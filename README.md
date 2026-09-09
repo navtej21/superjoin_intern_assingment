@@ -1,5 +1,8 @@
 # Fact Knowledge Layer
 
+# Demo Of The Product
+[![Watch the video]([https://youtube.com](https://drive.google.com/file/d/1dG03SM00RsnzZyJutbwymn4SKVQdac-V/view?usp=drive_link))] Product-Demo
+
 A system that reads a corpus of PDFs, extracts individually-grounded
 facts (a number or a status, tied to the exact quote and page it came
 from), and finds where those facts corroborate, contradict, or can be
@@ -10,6 +13,7 @@ against six real filings: Delhivery's IPO prospectus (2022), its FY24
 annual report, its Q4 FY24 earnings deck, India's Economic Survey
 2024-25, the RBI's Annual Report 2024-25, and the IMF's 2025 India
 Article IV report.
+
 
 ## 1. Approach & Architecture
 
