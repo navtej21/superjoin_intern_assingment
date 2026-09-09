@@ -68,22 +68,25 @@ provision.
 ## 2. Setup & How to Run
 
 ```bash
-git clone <this-repo>
-cd superjoin-intern
+git clone https://github.com/navtej21/superjoin_intern_assingment.git
+cd superjoin_intern_assingment
 python -m venv .venv
 .venv\Scripts\activate        # Windows; use `source .venv/bin/activate` on macOS/Linux
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project root with your Anthropic key:
+If `data/fact_layer.db` is already present in your clone, the corpus is
+already extracted and adjudicated — skip straight to "serve the API"
+below. Otherwise, create a `.env` file in the project root with your
+Anthropic key and run the pipeline yourself:
 
-
-
-Then, in order:
+```
+ANTHROPIC_API_KEY=sk-ant-api03-***
+```
 
 ```bash
-# Phase A — ingest all PDFs in a folder (free, local)
-python -m app.pipeline ingest data/pdfs/
+# Phase A — ingest all PDFs in the corpus (free, local)
+python -m app.pipeline ingest data/corpus/
 
 # see what's in the database so far
 python -m app.pipeline stats
@@ -94,8 +97,11 @@ python -m app.pipeline extract --doc-id <id>  # just one, e.g. to retry a failed
 
 # Phase C — find relationships (free, local, re-runnable any time)
 python -m app.pipeline relationships
+```
 
-# Phase D — serve the API
+Either way, serve the API with:
+
+```bash
 uvicorn app.api:app --reload
 # then open http://127.0.0.1:8000/docs
 ```
@@ -175,8 +181,11 @@ that caching it would add complexity for no measurable benefit.
   A GDP growth *projection* for "2025-26" and a *realized* print for
   "2025Q2" can land in the same coarse year bucket and get flagged as
   contradicting, when they're actually different kinds of claims about
-  different sub-periods. Every relationship carries full quotes and
-  periods specifically so a human reviewer can dismiss this kind of
+  different sub-periods. Some facts sharing a generic metric label
+  across genuinely different sub-categories (e.g. rankings across
+  different export sectors) can be compared as if they were the same
+  claim for the same reason — every relationship carries full quotes
+  and periods specifically so a human reviewer can dismiss this kind of
   case at a glance.
 - **A handful of extraction candidates use an ellipsis to compress a
   table row** (e.g. "Service EBITDA (₹ million)... 9,414"), which can
@@ -192,9 +201,9 @@ the individual, independently-grounded Facts it points at are.
 ## 5. Example Results
 
 Run against the full corpus — all six documents, 1,012 grounded facts —
-`python -m app.pipeline relationships` finds 70 relationships: 19
-corroboration, 39 contradiction, 12 context-reconcilable. One real
-example of each required pattern:
+`python -m app.pipeline relationships` finds real corroboration,
+contradiction, and context-reconcilable relationships. One example of
+each required pattern:
 
 **Corroboration** — the same fact, stated independently in two places:
 
@@ -216,10 +225,11 @@ items:
 > Total non-current assets (₹40,934.01M) + Total current assets
 > (₹43,360.82M) = Total assets (₹84,294.83M).
 
-(The same pattern independently fires three more times in this corpus —
-total liabilities, the IPO's fresh-issue + offer-for-sale = total offer
-size, and finance income totals — demonstrating the check generalises
-rather than being tuned to one filing.)
+(The same pattern independently fires several more times in this
+corpus — total liabilities, the IPO's fresh-issue + offer-for-sale =
+total offer size, finance income totals, and two separate forex-reserve
+reconciliations — demonstrating the check generalises rather than being
+tuned to one filing.)
 
 **Context-reconcilable — basis difference.** Two values differ, but a
 stated accounting basis explains the gap:
@@ -228,7 +238,7 @@ stated accounting basis explains the gap:
 > ₹81,415.38M on a consolidated basis for FY24 — the same period, a
 > different scope, not a conflict.
 
-The full set of 70 relationships, with every fact's exact quote and
-page number, is browsable at `/relationships` once the API is running
+The full set of relationships, with every fact's exact quote and page
+number, is browsable at `/relationships` once the API is running
 (`uvicorn app.api:app --reload`, then `/docs`), or via
 `python -m app.pipeline relationships` directly from the database.
